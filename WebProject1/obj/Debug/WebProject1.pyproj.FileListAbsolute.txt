@@ -1,0 +1,15 @@
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\bin\Microsoft.PythonTools.WebRole.dll
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\attach_server.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\visualstudio_py_debugger.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\visualstudio_py_repl.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\visualstudio_py_util.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\__init__.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\__main__.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\bin\AzureSetup.cfg
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\bin\Microsoft.PythonTools.AzureSetup.exe
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\bin\Microsoft.PythonTools.AzureSetup.exe.config
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\bin\wfastcgi.py
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\web.config
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\web.debug.config
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\obj\Debug\deployment-updated-orig-prefix.txt
+c:\users\slavi\onedrive\документы\visual studio 2015\Projects\WebProject1\WebProject1\ptvs_virtualenv_proxy.py
