@@ -108,8 +108,8 @@ def register():
     salt = "#sda$*(DAS".encode('utf-8')
     password = request.json['password'].encode('utf-8')
     password = hashlib.sha512(password + salt).hexdigest()
-    auth={'login':request.json['login'],'password':password}
-    db.users.insert(auth)
+    data={'login':request.json['login'],'password':password}
+    db.users.insert(data)
     return jsonify({'response': 'success'}), 201
 
 @app.route('/api/login', methods=['POST'])
