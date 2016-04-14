@@ -9,9 +9,6 @@ import hashlib
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017")
 db = client.test
-app.secret_key = 'FASF%^#Q&YDSA&*%UTJ'
-app.permanent_session_lifetime = timedelta(seconds=3600)
-
 
 def check_category(case):
     case = case.lower(); 
