@@ -111,10 +111,10 @@ def register():
     password = hashlib.sha1(password + salt).hexdigest()
     data={'login':request.json['login'],'password':password}
     check_user = {'login':request.json['login']}
-    result =json.loads(json_util.dumps(check_user))
+    result =json.loads(json_util.dumps(db.users.find(check_user)))
     if(len(result) == 0):
        db.users.insert(data)
-       return jsonify({'response': 'success'}), 210
+       return jsonify({'response': 'success'}), 201
     else: 
        return jsonify({'response': 'user exist'}), 400
 
@@ -159,6 +159,8 @@ def unauthorized():
 
 if __name__ == '__main__':
     timestamp = int(time.time())
+
+   
     app.debug = True;
     app.run()
 
