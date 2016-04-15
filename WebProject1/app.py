@@ -5,6 +5,7 @@ from datetime import datetime,date,timedelta
 from bson import json_util
 import json
 import hashlib
+import time
 
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017")
@@ -107,10 +108,15 @@ def register():
         return jsonify({'error': 'password not found'}),400
     salt = "#sda$*(DAS".encode('utf-8')
     password = request.json['password'].encode('utf-8')
-    password = hashlib.sha512(password + salt).hexdigest()
+    password = hashlib.sha1(password + salt).hexdigest()
     data={'login':request.json['login'],'password':password}
-    db.users.insert(data)
-    return jsonify({'response': 'success'}), 201
+    check_user = {'login':request.json['login']}
+    result =json.loads(json_util.dumps(check_user))
+    if(len(result) == 0):
+       db.users.insert(data)
+       return jsonify({'response': 'success'}), 210
+    else: 
+       return jsonify({'response': 'user exist'}), 400
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -125,6 +131,7 @@ def login():
     password = hashlib.sha512(password + salt).hexdigest()
     auth = {'login':request.json['login'],'password':password}
     result = json.loads(json_util.dumps(db.users.find(auth)))
+
     if len(result) == 0:
         return jsonify({'error': 'Unauthorized access'}), 401
     else:
@@ -151,6 +158,7 @@ def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
 
 if __name__ == '__main__':
+    timestamp = int(time.time())
     app.debug = True;
     app.run()
 
