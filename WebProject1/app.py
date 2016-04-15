@@ -1,7 +1,6 @@
 #!flask/bin/python
-from flask import Flask, abort, flash, redirect,jsonify,redirect,request, make_response
+from flask import Flask, jsonify, make_response
 from pymongo import MongoClient
-from datetime import datetime,date,timedelta
 from bson import json_util
 import json
 import hashlib
@@ -11,11 +10,7 @@ import random
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017")
 db = client.test
-
-end_time = int(time.time())
-
 const_timeleft=3600
-
 
 def check_category(case):
     case = case.lower(); 
@@ -26,7 +21,6 @@ def check_category(case):
     "c++" : "c++",
     "php" : "php",
     }.get(case, False)
-
 
 def generate_token():
     acsess_key = random.random()
@@ -57,7 +51,6 @@ def check_token(const_user):
 @app.route('/')
 @app.route('/home')
 def home():
-
      return ''
 
 #Добавлення issues 
@@ -73,11 +66,18 @@ def add_issue():
         return jsonify({'error': 'Category not found'}),400
     if (not check_category(request.json['category'])):
         return jsonify({'error': 'Category not exist'}),400
-    id = db.issues.find( {}, { "_id": 1 } ).sort( [('_id', -1)] ).limit(1);
-    id = id[0]["_id"] +1
-    user={'_id':id,'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category']),'date': datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')}
-    db.issues.insert(user)
-    return jsonify({'response': 'success'}), 201
+    if (not 'key' in request.json):
+        return jsonify({'error': 'key not found'}),400
+
+    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
+    if len(data) == 0:
+        abort(401)
+    else:
+        id = db.issues.find( {}, { "_id": 1 } ).sort( [('_id', -1)] ).limit(1);
+        id = id[0]["_id"] +1
+        user={'_id':id,'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category']),'date': datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')}
+        db.issues.insert(user)
+        return jsonify({'response': 'success'}), 201
     
 
 #вивід усіх issues 
@@ -98,13 +98,12 @@ def get_issue(category):
 #оновлення issues 
 @app.route('/api/update_issues/<int:_id>', methods=['PUT'])
 def update_issues(_id):
+    if not request.json:
+      abort(400)
     filter = {"_id":_id}
     data = json.loads(json_util.dumps(db.issues.find(filter)))
     if len(data) == 0:
         abort(404)
-    if not request.json:
-        abort(400)
-
     if (not 'title' in request.json):
         return jsonify({'error': 'title not found'}),400
     if (not 'text' in request.json):
@@ -113,10 +112,14 @@ def update_issues(_id):
         return jsonify({'error': 'Category not found'}),400
     if (not check_category(request.json['category'])):
         return jsonify({'error': 'Category not exist'}),400
-    data = {'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category'])}
-    id = {"_id":_id}
-    db.issues.update(id,data)
-    return jsonify({'response': 'success'}), 200
+    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
+    if len(data) == 0:
+        abort(401)
+    else:
+        data = {'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category'])}
+        id = {"_id":_id}
+        db.issues.update(id,data)
+        return jsonify({'response': 'success'}), 200
 
 #Видалення issues
 @app.route('/api/delete_issues/<int:_id>', methods=['DELETE'])
@@ -125,10 +128,13 @@ def delete_issues(_id):
     data = json.loads(json_util.dumps(db.issues.find(filter)))
     if len(data) == 0:
         abort(404)
-    data = {"_id":_id}
-    db.issues.remove(data)
-    return jsonify({'response': 'success'}), 200
-
+    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
+    if len(data) == 0:
+        abort(401)
+    else:
+        data = {"_id":_id}
+        db.issues.remove(data)
+        return jsonify({'response': 'success'}), 200
 
 #ключа доступу до даних
 @app.route('/api/register', methods=['POST'])
@@ -177,11 +183,9 @@ def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 @app.errorhandler(401)
-def unauthorized():
+def unauthorized(error):
     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
 
 if __name__ == '__main__':
-
-    app.debug = True;
     app.run()
 
