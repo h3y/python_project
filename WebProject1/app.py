@@ -1,16 +1,15 @@
 #!flask/bin/python
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify, make_response,request
 from pymongo import MongoClient
-from bson import json_util
-import json
-import hashlib
-import time
-import random
+import hashlib,time,random
 
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017")
 db = client.test
-const_timeleft=3600
+#час життя ключа
+const_timeleft=3600 
+#сіль для пароля
+salt = "#sda$*(DAS".encode('utf-8')
 
 def check_category(case):
     case = case.lower(); 
@@ -28,7 +27,6 @@ def generate_token():
     acsess_key = hashlib.sha1(acsess_key).hexdigest()
     acsess_key = acsess_key[0:15]
     return acsess_key
-
 
 def check_token(const_user):
     result = db.users.find(const_user)
@@ -69,8 +67,8 @@ def add_issue():
     if (not 'key' in request.json):
         return jsonify({'error': 'key not found'}),400
 
-    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
-    if len(data) == 0:
+    data = db.users.find({'key':request.json['key']}).count()
+    if (data == 0):
         abort(401)
     else:
         id = db.issues.find( {}, { "_id": 1 } ).sort( [('_id', -1)] ).limit(1);
@@ -79,31 +77,27 @@ def add_issue():
         db.issues.insert(user)
         return jsonify({'response': 'success'}), 201
     
-
 #вивід усіх issues 
 @app.route('/api/get_issues', methods=['GET'])
 def get_issues():
-        id = json.loads(json_util.dumps(db.issues.find()))
-        return jsonify({'response': id}),200
-
+      return jsonify({'response': list(db.issues.find())}),200#Якщо повертати  return jsonify({'response': db.issues.find()}) буде помилка, так як воно повертає курсор),
+                                                              #доступ до колекції за допомогою ітератора)
 #вивід issues з категорією 
 @app.route('/api/get_issues/<string:category>', methods=['GET'])
 def get_issue(category):
     if (not check_category(category)):
         return jsonify({'error': 'category not exist'}),400
-    filter = {"category":check_category(category)}
-    data = json.loads(json_util.dumps(db.issues.find(filter)))
-    return jsonify({'response': data}),200
+    result = list(db.issues.find({"category":check_category(category)}))#Аналогічно
+    return jsonify({'response': result}),200
 
 #оновлення issues 
 @app.route('/api/update_issues/<int:_id>', methods=['PUT'])
 def update_issues(_id):
     if not request.json:
       abort(400)
-    filter = {"_id":_id}
-    data = json.loads(json_util.dumps(db.issues.find(filter)))
-    if len(data) == 0:
-        abort(404)
+    result = db.issues.find({"_id":_id}).count()
+    if (result == 0):
+        abort(401)
     if (not 'title' in request.json):
         return jsonify({'error': 'title not found'}),400
     if (not 'text' in request.json):
@@ -112,12 +106,12 @@ def update_issues(_id):
         return jsonify({'error': 'Category not found'}),400
     if (not check_category(request.json['category'])):
         return jsonify({'error': 'Category not exist'}),400
-    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
-    if len(data) == 0:
-        abort(401)
+    result = db.users.find({'key':request.json['key']}).count()
+    if (result == 0):
+       abort(401)
     else:
-        data = {'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category'])}
         id = {"_id":_id}
+        data = {'title':request.json['title'],'text':request.json['text'],'category':check_category(request.json['category'])}
         db.issues.update(id,data)
         return jsonify({'response': 'success'}), 200
 
@@ -125,15 +119,14 @@ def update_issues(_id):
 @app.route('/api/delete_issues/<int:_id>', methods=['DELETE'])
 def delete_issues(_id):
     filter = {"_id":_id}
-    data = json.loads(json_util.dumps(db.issues.find(filter)))
-    if len(data) == 0:
-        abort(404)
-    data = json.loads(json_util.dumps(db.users.find({'key':request.json['key']})))
-    if len(data) == 0:
+    result = db.issues.find(filter).count()
+    if (result == 0):
+        abort(401)
+    result = db.users.find({'key':request.json['key']}).count()
+    if (result == 0):
         abort(401)
     else:
-        data = {"_id":_id}
-        db.issues.remove(data)
+        db.issues.remove({"_id":_id})
         return jsonify({'response': 'success'}), 200
 
 #ключа доступу до даних
@@ -145,17 +138,16 @@ def register():
         return jsonify({'error': 'login not found'}),400
     if (not 'password' in request.json):
         return jsonify({'error': 'password not found'}),400
-    salt = "#sda$*(DAS".encode('utf-8')
     password = request.json['password'].encode('utf-8')
     password = hashlib.sha1(password + salt).hexdigest()
     data={'login':request.json['login'],'password':password,'timeleft':0}
-    check_user = {'login':request.json['login']}
-    result =json.loads(json_util.dumps(db.users.find(check_user)))
-    if(len(result) == 0):
+    result = db.users.find({'login':request.json['login']}).count()
+    if(result == 0):
        db.users.insert(data)
        return jsonify({'response': 'success'}), 201
     else: 
        return jsonify({'error': 'user exist'}), 400
+
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -165,16 +157,14 @@ def login():
         return jsonify({'error': 'login not found'}),400
     if (not 'password' in request.json):
         return jsonify({'error': 'password not found'}),400
-    salt = "#sda$*(DAS".encode('utf-8')
+
     password = request.json['password'].encode('utf-8')
     password = hashlib.sha1(password + salt).hexdigest()
-    check_user = {'login':request.json['login'],'password':password}
-    result =json.loads(json_util.dumps(db.users.find(check_user)))
-    if(len(result) == 0):
+    result = db.users.find({'login':request.json['login'],'password':password}).count()
+    if(result == 0):
        return jsonify({'error': 'user not found'}), 400
     else: 
-        const_user = json.loads(json_util.dumps({'login':request.json['login']}))
-        return check_token(const_user)
+       return check_token({'login':request.json['login']})
 
 
 #Обробка стандартного 404
